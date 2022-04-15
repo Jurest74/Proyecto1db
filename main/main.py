@@ -5,16 +5,30 @@ from pydantic import  BaseModel, Field
 from typing import Optional, Union
 from uuid import uuid4, UUID
 
+from utils.functions import initDirectory, createJsonFile
+
+##################################################
 # Get current directory and go back one level
+##################################################
 os.chdir('../')
 current_directory = os.getcwd()
 
-#print(current_directory)
+# Create a new directory for the data
+initDirectory(current_directory)
+
+# Create a json file on the data directory
+createJsonFile(current_directory, 'base.json',[])
 
 
+##################################################
+# Create app FastAPI instance
+##################################################
 app = FastAPI()
 
-#Data Model
+
+##################################################
+#  Data Model
+##################################################
 class Data(BaseModel):
     id: Optional[UUID] = Field(default_factory=uuid4)
     key: str
@@ -22,6 +36,10 @@ class Data(BaseModel):
 
 
 data = []
+
+##################################################
+# Routes with crud operations
+##################################################
 
 @app.get("/")
 def read_root():
