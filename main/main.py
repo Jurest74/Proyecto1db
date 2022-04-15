@@ -1,47 +1,65 @@
-# main.py
-from fastapi import FastAPI, Response, status
-from pydantic import BaseModel
-import csv
-import json
+import os
 
-class DataBaseModel(BaseModel):
-    key: str
-    value: str
+from fastapi import FastAPI, HTTPException
+from pydantic import  BaseModel, Field
+from typing import Optional, Union
+from uuid import uuid4, UUID
+
+# Get current directory and go back one level
+os.chdir('../')
+current_directory = os.getcwd()
+
+#print(current_directory)
+
 
 app = FastAPI()
 
+#Data Model
+class Data(BaseModel):
+    id: Optional[UUID] = Field(default_factory=uuid4)
+    key: str
+    value: Union[str, int, float]
 
 
-@app.get("/", status_code=200)
-async def get_data(key):
-    csv_file = csv.reader(open('D:/DATOS DE USUARIO/Desktop/main/node.csv', "r"), delimiter='"')
-    for row in csv_file:
-        row_str = str(row)
-        if('key: '+key in row_str):
-            print("key value find", row_str)
-    return {"Hello": "World"}
+data = []
 
-@app.post("/", status_code=201)
-async def set_data(item: DataBaseModel):
-    print(item.key)
-    with open('D:/DATOS DE USUARIO/Desktop/main/node.csv', 'a', encoding='UTF8', newline='') as f:
-        text = json.dumps(item.__dict__)
-        text = text.replace('"', '')
-        print("text", text)
-        writer = csv.writer(f)
-        writer.writerow([text])
-    return {"status": 200}
-
-@app.delete("/", status_code=200)
-async def delete_data(key: str, response: Response):
-    return "delete"
-
-@app.put("/", status_code=200)
-async def update_data(key: str, response: Response):
-    return "update"
+@app.get("/")
+def read_root():
+    return {"proyecto": "Proyecto BD distribuida", "version": "1.0", "autores": ["Juan Diego", "Santiago Aguirre", "Ricardo Gottheil", ]}
 
 
-#@app.api_route("/data", methods = ['GET', 'POST'])
-#def handle_data(item):
-#    print(item)
-#    return item
+@app.get("/data")
+def read_data():
+    return data
+
+@app.post("/data")
+def create_data(new_data: Data):
+    data.append(new_data.dict())
+    return new_data.dict()
+
+@app.get("/data/{data_id}")
+def get_data_by_id(data_id: UUID):
+    for each_item_data in data:
+        if each_item_data['id'] == data_id:
+            return each_item_data
+
+    raise HTTPException(status_code=404, detail="Data not found")
+
+@app.delete("/data/{data_id}")
+def delete_data_by_id(data_id: UUID):
+    for each_item_data in data:
+        if each_item_data['id'] == data_id:
+            data.remove(each_item_data)
+            return {"message": "Data deleted"}
+
+    raise HTTPException(status_code=404, detail="Data not found")
+
+@app.put("/data/{data_id}")
+def update_data_by_id(data_id: UUID, new_data: Data):
+    for each_item_data in data:
+        if each_item_data['id'] == data_id:
+            each_item_data['key'] = new_data.key
+            each_item_data['value'] = new_data.value
+            return each_item_data
+
+    raise HTTPException(status_code=404, detail="Data not found")
