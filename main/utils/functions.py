@@ -18,3 +18,11 @@ def createJsonFile(directory, file_name, data):
     else:
         print("File already exists: " + file_name)
         pass
+
+def loadDataFromJson(directory):
+    with open( directory + '/data/base.json') as f: #specify the file name
+        return json.load(f)
+
+def saveDataToJson(directory, data):
+    with open( directory + '/data/base.json', 'w') as f: #specify the file name
+        json.dump(data, f)

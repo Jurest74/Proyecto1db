@@ -1,11 +1,12 @@
 import os
+import json
 
 from fastapi import FastAPI, HTTPException
 from pydantic import  BaseModel, Field
 from typing import Optional, Union
 from uuid import uuid4, UUID
 
-from utils.functions import initDirectory, createJsonFile
+from utils.functions import initDirectory, createJsonFile, loadDataFromJson, saveDataToJson
 
 ##################################################
 # Get current directory and go back one level
@@ -30,11 +31,15 @@ app = FastAPI()
 #  Data Model
 ##################################################
 class Data(BaseModel):
-    id: Optional[UUID] = Field(default_factory=uuid4)
+    id: Optional[str]
     key: str
     value: Union[str, int, float]
 
+    def toJson(self):
+        return json.dumps(self, default=lambda o: o.__dict__)
 
+
+json_data = loadDataFromJson(current_directory)
 data = []
 
 ##################################################
@@ -48,36 +53,39 @@ def read_root():
 
 @app.get("/data")
 def read_data():
-    return data
+    return json_data
 
 @app.post("/data")
 def create_data(new_data: Data):
-    data.append(new_data.dict())
+    new_data.id = str(uuid4())
+    json_data.append(new_data.dict())
+    saveDataToJson(current_directory, json_data)
     return new_data.dict()
 
 @app.get("/data/{data_id}")
-def get_data_by_id(data_id: UUID):
-    for each_item_data in data:
+def get_data_by_id(data_id: str):
+    for each_item_data in json_data:
         if each_item_data['id'] == data_id:
             return each_item_data
 
     raise HTTPException(status_code=404, detail="Data not found")
 
 @app.delete("/data/{data_id}")
-def delete_data_by_id(data_id: UUID):
-    for each_item_data in data:
-        if each_item_data['id'] == data_id:
-            data.remove(each_item_data)
+def delete_data_by_id(data_id: str):
+    for index, data in enumerate(json_data):
+        if data['id'] == data_id:
+            json_data.pop(index)
+            saveDataToJson(current_directory, json_data)
             return {"message": "Data deleted"}
 
     raise HTTPException(status_code=404, detail="Data not found")
 
 @app.put("/data/{data_id}")
-def update_data_by_id(data_id: UUID, new_data: Data):
-    for each_item_data in data:
-        if each_item_data['id'] == data_id:
-            each_item_data['key'] = new_data.key
-            each_item_data['value'] = new_data.value
-            return each_item_data
+def update_data_by_id(data_id: str, new_data: Data):
+    for index, data in enumerate(json_data):
+        if data["id"] == data_id:
+            json_data[index]["key"]= new_data.dict()["key"]
+            json_data[index]["value"]= new_data.dict()["value"]
+            return {"message": "Data updated"}
 
     raise HTTPException(status_code=404, detail="Data not found")
