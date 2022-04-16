@@ -5,20 +5,14 @@ from fastapi import FastAPI, HTTPException
 from pydantic import  BaseModel, Field
 from typing import Optional, Union
 from uuid import uuid4, UUID
+from utils.hashtable import HashTable
 
 from utils.functions import initDirectory, createJsonFile, loadDataFromJson, saveDataToJson
 
 ##################################################
 # Get current directory and go back one level
 ##################################################
-os.chdir('../')
-current_directory = os.getcwd()
 
-# Create a new directory for the data
-initDirectory(current_directory)
-
-# Create a json file on the data directory
-createJsonFile(current_directory, 'base.json',[])
 
 
 ##################################################
@@ -26,6 +20,11 @@ createJsonFile(current_directory, 'base.json',[])
 ##################################################
 app = FastAPI()
 
+##################################################
+# Create hash_table instance
+##################################################
+
+hash_table = HashTable(3)
 
 ##################################################
 #  Data Model
@@ -39,7 +38,7 @@ class Data(BaseModel):
         return json.dumps(self, default=lambda o: o.__dict__)
 
 
-json_data = loadDataFromJson(current_directory)
+#json_data = loadDataFromJson('../')
 data = []
 
 ##################################################
@@ -53,13 +52,18 @@ def read_root():
 
 @app.get("/data")
 def read_data():
+    print('gets')
+    print('get',hash_table.get_val('nombre'))
     return json_data
 
 @app.post("/data")
 def create_data(new_data: Data):
+    print('new_data', new_data)
     new_data.id = str(uuid4())
+    json_data = loadDataFromJson('../', new_data)
     json_data.append(new_data.dict())
-    saveDataToJson(current_directory, json_data)
+    saveDataToJson('../', json_data, new_data)
+    #hash_table.set_val(new_data.key, new_data.value)
     return new_data.dict()
 
 @app.get("/data/{data_id}")
