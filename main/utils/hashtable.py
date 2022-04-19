@@ -5,25 +5,20 @@ class HashTable:
 
 	# Create empty bucket list of given size
 	def __init__(self, size):
-		print('hash class instance')
 		self.size = size
 		self.hash_table = self.create_buckets()
 
 	def create_buckets(self):
-		print('hash create', self.size)
 		os.chdir('../')
 		current_directory = os.getcwd()
 		initDirectory(current_directory)
-		print('current_directory', current_directory)
 		os.chdir('./data/')
-		print('os.getcwd()',os.getcwd())
 		current_directory = os.getcwd()
-		print('current_directory final', current_directory)
 		# Create a new directory for the data
 		for i in range(self.size):
-			print('nodo', i +1)
-			os.mkdir(current_directory + '/nodo' + str(i+1))
-			createJsonFile(current_directory + '/nodo' + str(i+1), 'base.json',[])
+			if os.path.exists(current_directory + '/nodo' + str(i+1)) == False:
+				os.mkdir(current_directory + '/nodo' + str(i+1))
+				createJsonFile(current_directory + '/nodo' + str(i+1), 'base.json',[])
 		# Create a json file on the data directory
 		return [[] for _ in range(self.size)]
 

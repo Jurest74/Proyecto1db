@@ -19,19 +19,16 @@ def createJsonFile(directory, file_name, data):
         print("File already exists: " + file_name)
         pass
 
-def loadDataFromJson(directory, new_data):
-    print('json.load(f)')
-    hashed_key = (hash(new_data.key) % 3)
+def loadDataFromJson(directory, key, numeroNodos):
+    hashed_key = (hash(key) % numeroNodos)
     hashed_key += 1
-    print('hashed_key loaddata', hashed_key)
     with open( directory + '/data/nodo' + str(hashed_key) + '/base.json') as f: #specify the file name
         return json.load(f)
 
-def saveDataToJson(directory, data, new_data):
-    print('data', data)
-    print('newdata', new_data)
-    hashed_key = (hash(new_data.key) % 3)
+def saveDataToJson(directory, data, new_data, numeroNodos):
+    hashed_key = (hash(new_data.key) % numeroNodos)
     hashed_key += 1
-    print('hashed_key', hashed_key)
     with open( directory + '/data/nodo'+str(hashed_key)+'/base.json', 'w') as f: #specify the file name
         json.dump(data, f)
+
+        

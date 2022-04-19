@@ -1,19 +1,19 @@
 import os
 import json
+from xxlimited import new
 
 from fastapi import FastAPI, HTTPException
 from pydantic import  BaseModel, Field
 from typing import Optional, Union
-from uuid import uuid4, UUID
-from utils.hashtable import HashTable
 
+from utils.hashtable import HashTable
 from utils.functions import initDirectory, createJsonFile, loadDataFromJson, saveDataToJson
 
 ##################################################
 # Get current directory and go back one level
 ##################################################
 
-
+numeroNodos = 3
 
 ##################################################
 # Create app FastAPI instance
@@ -24,13 +24,12 @@ app = FastAPI()
 # Create hash_table instance
 ##################################################
 
-hash_table = HashTable(3)
+hash_table = HashTable(numeroNodos)
 
 ##################################################
 #  Data Model
 ##################################################
 class Data(BaseModel):
-    id: Optional[str]
     key: str
     value: Union[str, int, float]
 
@@ -58,36 +57,41 @@ def read_data():
 
 @app.post("/data")
 def create_data(new_data: Data):
-    print('new_data', new_data)
-    new_data.id = str(uuid4())
-    json_data = loadDataFromJson('../', new_data)
+    hashed_key = new_data.key
+    json_data = loadDataFromJson('../', hashed_key, numeroNodos)
+    for each_item_data in json_data:
+        if each_item_data['key'] == new_data.key:
+            raise HTTPException(status_code=400, detail="Key already exists")
+
     json_data.append(new_data.dict())
-    saveDataToJson('../', json_data, new_data)
-    #hash_table.set_val(new_data.key, new_data.value)
+    saveDataToJson('../', json_data, new_data, numeroNodos)
     return new_data.dict()
 
-@app.get("/data/{data_id}")
-def get_data_by_id(data_id: str):
+@app.get("/data/{data_key}")
+def get_data_by_id(data_key: str):
+    json_data = loadDataFromJson('../', data_key, numeroNodos)
     for each_item_data in json_data:
-        if each_item_data['id'] == data_id:
+        if each_item_data['key'] == data_key:
             return each_item_data
 
     raise HTTPException(status_code=404, detail="Data not found")
 
-@app.delete("/data/{data_id}")
-def delete_data_by_id(data_id: str):
+@app.delete("/data/{data_key}")
+def delete_data_by_id(data_key: str):
+    json_data = loadDataFromJson('../', data_key, numeroNodos)
     for index, data in enumerate(json_data):
-        if data['id'] == data_id:
+        if data['key'] == data_key:
             json_data.pop(index)
-            saveDataToJson(current_directory, json_data)
+            saveDataToJson('../', json_data)
             return {"message": "Data deleted"}
 
     raise HTTPException(status_code=404, detail="Data not found")
 
-@app.put("/data/{data_id}")
-def update_data_by_id(data_id: str, new_data: Data):
+@app.put("/data/{data_key}")
+def update_data_by_id(data_key: str, new_data: Data):
+    json_data = loadDataFromJson('../', data_key, numeroNodos)
     for index, data in enumerate(json_data):
-        if data["id"] == data_id:
+        if data["key"] == data_key:
             json_data[index]["key"]= new_data.dict()["key"]
             json_data[index]["value"]= new_data.dict()["value"]
             return {"message": "Data updated"}
