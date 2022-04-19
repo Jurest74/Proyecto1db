@@ -1,4 +1,5 @@
 import os
+import json
 from utils.functions import initDirectory, createJsonFile, loadDataFromJson, saveDataToJson
 
 class HashTable:
@@ -22,15 +23,25 @@ class HashTable:
 		# Create a json file on the data directory
 		return [[] for _ in range(self.size)]
 
+	def get_all_values(self):
+		os.chdir('../')
+		current_directory = os.getcwd()
+		os.chdir('./data/')
+		current_directory = os.getcwd()
+		values = list()
+		for i in range(self.size):
+			if os.path.exists(current_directory + '/nodo' + str(i+1)) == True:
+				with open(current_directory + '/nodo' + str(i+1) + '/base.json') as f:
+					values.extend(json.load(f))
+		return values
+
 	# Insert values into hash map
 	def set_val(self, key, val):
 		# Get the index from the key
 		# using hash function
 		hashed_key = hash(key) % self.size
-		print('hashed_key', hashed_key)
 		# Get the bucket corresponding to index
 		bucket = self.hash_table[hashed_key]
-		print('bucket', bucket)
 		found_key = False
 		for index, record in enumerate(bucket):
 			record_key, record_val = record
@@ -75,7 +86,7 @@ class HashTable:
 		if found_key:
 			return record_val
 		else:
-			return "No record found"
+			return {"message": "No record found"}
 
 	# Remove a value with specific key
 	def delete_val(self, key):
@@ -86,10 +97,11 @@ class HashTable:
 		
 		# Get the bucket corresponding to index
 		bucket = self.hash_table[hashed_key]
-
+		
 		found_key = False
 		for index, record in enumerate(bucket):
 			record_key, record_val = record
+			print(record_key)
 			
 			# check if the bucket has same key as
 			# the key to be deleted

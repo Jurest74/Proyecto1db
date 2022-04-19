@@ -1,7 +1,3 @@
-import os
-import json
-from xxlimited import new
-
 from fastapi import FastAPI, HTTPException
 from pydantic import  BaseModel, Field
 from typing import Optional, Union
@@ -33,9 +29,6 @@ class Data(BaseModel):
     key: str
     value: Union[str, int, float]
 
-    def toJson(self):
-        return json.dumps(self, default=lambda o: o.__dict__)
-
 
 #json_data = loadDataFromJson('../')
 data = []
@@ -51,9 +44,8 @@ def read_root():
 
 @app.get("/data")
 def read_data():
-    print('gets')
-    print('get',hash_table.get_val('nombre'))
-    return json_data
+    
+    return hash_table.get_all_values()
 
 @app.post("/data")
 def create_data(new_data: Data):
@@ -69,7 +61,7 @@ def create_data(new_data: Data):
 
 @app.get("/data/{data_key}")
 def get_data_by_id(data_key: str):
-    json_data = loadDataFromJson('../', data_key, numeroNodos)
+    json_data = hash_table.get_all_values()
     for each_item_data in json_data:
         if each_item_data['key'] == data_key:
             return each_item_data
@@ -78,11 +70,11 @@ def get_data_by_id(data_key: str):
 
 @app.delete("/data/{data_key}")
 def delete_data_by_id(data_key: str):
-    json_data = loadDataFromJson('../', data_key, numeroNodos)
-    for index, data in enumerate(json_data):
+    json_data = hash_table.get_all_values()
+    for _, data in enumerate(json_data):
         if data['key'] == data_key:
-            json_data.pop(index)
-            saveDataToJson('../', json_data)
+            print(data_key)
+            hash_table.delete_val(data_key)
             return {"message": "Data deleted"}
 
     raise HTTPException(status_code=404, detail="Data not found")
